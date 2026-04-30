@@ -1,30 +1,22 @@
-# Versión del formato de Docker Compose
-# No es la versión de Docker, sino del esquema del archivo
-version: "3.9"
-
-# Lista de servicios (contenedores) que componen la aplicación
 services:
 
-  # Servicio de base de datos
   db:
-    image: postgres:16
+    image: postgres:16-alpine
     container_name: marketplace-db
-
-    # Variables de entorno que PostgreSQL usa al iniciarse
     environment:
-      POSTGRES_USER: marketplace        # Usuario de la BD
-      POSTGRES_PASSWORD: marketplace    # Contraseña del usuario
-      POSTGRES_DB: marketplace          # Nombre de la base de datos inicial
-
-    # Mapeo de puertos
+      POSTGRES_USER: ${DB_USER:-marketplace}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-marketplace}
+      POSTGRES_DB: ${DB_NAME:-marketplace}
     ports:
-      - "15432:5432" # Mapea el puerto 15432 de mi máquina al puerto 5432 del contenedor (Postgres)
-
-    # Volúmenes para persistir datos
-    # Evita que se pierdan los datos al parar/eliminar el contenedor
+      - "${DB_PORT:-15432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-marketplace} -d ${DB_NAME:-marketplace}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
-# Definición de volúmenes persistentes
 volumes:
   postgres_data:

@@ -1,0 +1,16 @@
+{
+  "name": "marketplace-b2b",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "api":        "npm run start:dev --prefix apps/api",
+    "web":        "npm start --prefix apps/web",
+    "db:up":      "docker compose up -d",
+    "db:down":    "docker compose down",
+    "db:reset":   "docker compose down -v && docker compose up -d",
+    "migrate":    "npm run --prefix apps/api prisma migrate dev",
+    "install:all": "npm install --prefix apps/api && npm install --prefix apps/web",
+    "build:api":  "npm run build --prefix apps/api",
+    "build:web":  "npm run build --prefix apps/web"
+  }
+}

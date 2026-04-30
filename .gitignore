@@ -1,6 +1,37 @@
-# Claude Code — archivos locales, no compartir
+# ─── Claude Code ─────────────────────────────────────────────────────────────
 .claude/settings.local.json
 CLAUDE.md
 
-# Prisma — cliente generado (va en node_modules)
+# ─── Environment variables (never commit secrets) ────────────────────────────
+.env
+.env.local
+.env.*.local
+apps/**/.env
+apps/**/.env.local
+
+# ─── Dependencies ─────────────────────────────────────────────────────────────
+node_modules/
+apps/**/node_modules/
+
+# ─── Build output ─────────────────────────────────────────────────────────────
+dist/
+build/
+apps/**/dist/
+apps/**/build/
+apps/web/.angular/
+
+# ─── Prisma generated ─────────────────────────────────────────────────────────
 apps/api/generated/
+
+# ─── Logs ─────────────────────────────────────────────────────────────────────
+*.log
+logs/
+npm-debug.log*
+
+# ─── Test coverage ────────────────────────────────────────────────────────────
+coverage/
+apps/**/coverage/
+
+# ─── OS ───────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
