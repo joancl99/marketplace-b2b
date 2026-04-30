@@ -1,0 +1,6 @@
+# Claude Code — archivos locales, no compartir
+.claude/settings.local.json
+CLAUDE.md
+
+# Prisma — cliente generado (va en node_modules)
+apps/api/generated/
