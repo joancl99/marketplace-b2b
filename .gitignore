@@ -6,22 +6,25 @@ CLAUDE.md
 .env
 .env.local
 .env.*.local
-apps/**/.env
-apps/**/.env.local
+backend/.env
+backend/.env.local
+frontend/.env
+frontend/.env.local
 
 # ─── Dependencies ─────────────────────────────────────────────────────────────
 node_modules/
-apps/**/node_modules/
+backend/node_modules/
+frontend/node_modules/
 
 # ─── Build output ─────────────────────────────────────────────────────────────
 dist/
 build/
-apps/**/dist/
-apps/**/build/
-apps/web/.angular/
+backend/dist/
+frontend/dist/
+frontend/.angular/
 
 # ─── Prisma generated ─────────────────────────────────────────────────────────
-apps/api/generated/
+backend/generated/
 
 # ─── Logs ─────────────────────────────────────────────────────────────────────
 *.log
@@ -30,7 +33,11 @@ npm-debug.log*
 
 # ─── Test coverage ────────────────────────────────────────────────────────────
 coverage/
-apps/**/coverage/
+backend/coverage/
+frontend/coverage/
+
+# ─── Leftover from restructure (safe to delete manually) ─────────────────────
+apps/
 
 # ─── OS ───────────────────────────────────────────────────────────────────────
 .DS_Store

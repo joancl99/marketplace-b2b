@@ -1,0 +1,185 @@
+<div class="dashboard">
+
+  <!-- ── Header ──────────────────────────────────────────────────────────── -->
+  <div class="page-header fade-up">
+    <div class="header-text">
+      <h1 class="page-title">Dashboard</h1>
+      <p class="page-sub">Marketplace performance overview</p>
+    </div>
+    <div class="period-tabs">
+      @for (p of periods; track p.key) {
+        <button class="period-btn" [class.active]="period() === p.key" (click)="setPeriod(p.key)">
+          {{ p.label }}
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- ── Loading ─────────────────────────────────────────────────────────── -->
+  @if (loading()) {
+    <div class="loading-state">
+      <mat-spinner diameter="32"></mat-spinner>
+    </div>
+  }
+
+  <!-- ── KPI Cards ───────────────────────────────────────────────────────── -->
+  @if (kpis(); as k) {
+    <div class="kpi-grid">
+
+      <div class="kpi-card fade-up-1">
+        <div class="kpi-icon-wrap kpi-blue">
+          <span class="material-icons">payments</span>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-label">Total Revenue</span>
+          <span class="kpi-value">{{ k.totalRevenue | currency: 'USD' : 'symbol' : '1.0-0' }}</span>
+        </div>
+      </div>
+
+      <div class="kpi-card fade-up-2">
+        <div class="kpi-icon-wrap kpi-cyan">
+          <span class="material-icons">shopping_bag</span>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-label">Total Orders</span>
+          <span class="kpi-value">{{ k.totalOrders | number }}</span>
+        </div>
+      </div>
+
+      <div class="kpi-card fade-up-3">
+        <div class="kpi-icon-wrap kpi-green">
+          <span class="material-icons">trending_up</span>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-label">Avg Order Value</span>
+          <span class="kpi-value">{{ k.avgOrderValue | currency: 'USD' : 'symbol' : '1.0-0' }}</span>
+        </div>
+      </div>
+
+      <div class="kpi-card fade-up-4">
+        <div class="kpi-icon-wrap kpi-amber">
+          <span class="material-icons">group</span>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-label">Customers</span>
+          <span class="kpi-value">{{ k.totalCustomers | number }}</span>
+        </div>
+      </div>
+
+    </div>
+  }
+
+  <!-- ── Charts ──────────────────────────────────────────────────────────── -->
+  <div class="charts-grid">
+
+    <!-- Demand evolution -->
+    <div class="card chart-card fade-up-2">
+      <div class="card-header">
+        <div>
+          <h3 class="card-title">Demand Evolution</h3>
+          <span class="card-sub">Revenue &amp; orders over time</span>
+        </div>
+      </div>
+      @if (demandChart(); as opts) {
+        <apx-chart
+          [series]="opts.series"
+          [chart]="opts.chart"
+          [xaxis]="opts.xaxis"
+          [yaxis]="opts.yaxis"
+          [stroke]="opts.stroke"
+          [fill]="opts.fill"
+          [colors]="opts.colors"
+          [grid]="opts.grid"
+          [dataLabels]="opts.dataLabels"
+          [tooltip]="opts.tooltip"
+          [legend]="opts.legend"
+        ></apx-chart>
+      } @else {
+        <div class="chart-placeholder"></div>
+      }
+    </div>
+
+    <!-- Top products -->
+    <div class="card chart-card fade-up-3">
+      <div class="card-header">
+        <div>
+          <h3 class="card-title">Top Products</h3>
+          <span class="card-sub">By total revenue</span>
+        </div>
+      </div>
+      @if (topProductsChart(); as opts) {
+        <apx-chart
+          [series]="opts.series"
+          [chart]="opts.chart"
+          [xaxis]="opts.xaxis"
+          [yaxis]="opts.yaxis"
+          [plotOptions]="opts.plotOptions"
+          [colors]="opts.colors"
+          [grid]="opts.grid"
+          [dataLabels]="opts.dataLabels"
+          [tooltip]="opts.tooltip"
+          [legend]="opts.legend"
+        ></apx-chart>
+      } @else {
+        <div class="chart-placeholder"></div>
+      }
+    </div>
+
+  </div>
+
+  <!-- ── Recent Orders ───────────────────────────────────────────────────── -->
+  <div class="card orders-card fade-up-4">
+    <div class="card-header">
+      <div>
+        <h3 class="card-title">Recent Orders</h3>
+        <span class="card-sub">Last 5 orders placed</span>
+      </div>
+      <a routerLink="/orders" class="see-all-btn">
+        View all
+        <span class="material-icons">arrow_forward</span>
+      </a>
+    </div>
+
+    @if (recentOrders().length > 0) {
+      <table mat-table [dataSource]="recentOrders()" class="orders-table">
+
+        <ng-container matColumnDef="id">
+          <th mat-header-cell *matHeaderCellDef>Order</th>
+          <td mat-cell *matCellDef="let o">
+            <span class="mono text-muted">#{{ o.id.slice(0, 8) }}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let o">
+            <span class="badge" [ngClass]="statusClass(o.status)">{{ o.status }}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="total">
+          <th mat-header-cell *matHeaderCellDef>Total</th>
+          <td mat-cell *matCellDef="let o">
+            <span class="mono">{{ o.totalAmount | currency }}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="date">
+          <th mat-header-cell *matHeaderCellDef>Date</th>
+          <td mat-cell *matCellDef="let o">
+            <span class="text-secondary">{{ o.createdAt | date: 'MMM d, y' }}</span>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="orderCols"></tr>
+        <tr mat-row *matRowDef="let row; columns: orderCols"></tr>
+      </table>
+    } @else if (!loading()) {
+      <div class="empty-state">
+        <span class="material-icons">inbox</span>
+        <p>No orders yet</p>
+      </div>
+    }
+  </div>
+
+</div>
