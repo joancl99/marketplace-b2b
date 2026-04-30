@@ -1,0 +1,58 @@
+<div class="auth-page">
+  <div class="auth-bg">
+    <div class="grid-overlay"></div>
+    <div class="glow-orb"></div>
+  </div>
+
+  <div class="auth-card fade-up">
+    <div class="auth-header">
+      <div class="logo-mark">B2B</div>
+      <h1 class="auth-title">Crear cuenta</h1>
+      <p class="auth-sub">Marketplace Analytics Platform</p>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" class="auth-form">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Nombre completo</mat-label>
+        <input matInput formControlName="name" autocomplete="name" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Email</mat-label>
+        <input matInput formControlName="email" type="email" autocomplete="email" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Empresa (opcional)</mat-label>
+        <input matInput formControlName="company" autocomplete="organization" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Contraseña</mat-label>
+        <input matInput formControlName="password"
+               [type]="hidePassword ? 'password' : 'text'" />
+        <button mat-icon-button matSuffix type="button" (click)="hidePassword = !hidePassword">
+          <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+        </button>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Tipo de cuenta</mat-label>
+        <mat-select formControlName="role">
+          <mat-option value="PROVIDER">Proveedor</mat-option>
+          <mat-option value="DISTRIBUTOR">Distribuidor</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <button mat-flat-button class="submit-btn" type="submit"
+              [disabled]="form.invalid || loading">
+        @if (loading) { <span class="btn-spinner"></span> }
+        @else { Crear cuenta }
+      </button>
+    </form>
+
+    <p class="auth-link">
+      ¿Ya tienes cuenta? <a routerLink="/login">Iniciar sesión</a>
+    </p>
+  </div>
+</div>

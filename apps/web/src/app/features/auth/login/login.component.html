@@ -1,0 +1,45 @@
+<div class="auth-page">
+  <div class="auth-bg">
+    <div class="grid-overlay"></div>
+    <div class="glow-orb"></div>
+  </div>
+
+  <div class="auth-card fade-up">
+    <div class="auth-header">
+      <div class="logo-mark">B2B</div>
+      <h1 class="auth-title">Acceder</h1>
+      <p class="auth-sub">Marketplace Analytics Platform</p>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" class="auth-form">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Email</mat-label>
+        <input matInput formControlName="email" type="email" autocomplete="email" />
+        <mat-icon matSuffix>alternate_email</mat-icon>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Contraseña</mat-label>
+        <input matInput formControlName="password"
+               [type]="hidePassword ? 'password' : 'text'"
+               autocomplete="current-password" />
+        <button mat-icon-button matSuffix type="button" (click)="hidePassword = !hidePassword">
+          <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+        </button>
+      </mat-form-field>
+
+      <button mat-flat-button class="submit-btn" type="submit"
+              [disabled]="form.invalid || loading">
+        @if (loading) {
+          <span class="btn-spinner"></span>
+        } @else {
+          Iniciar sesión
+        }
+      </button>
+    </form>
+
+    <p class="auth-link">
+      ¿Sin cuenta? <a routerLink="/register">Registrarse</a>
+    </p>
+  </div>
+</div>
