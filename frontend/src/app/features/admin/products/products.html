@@ -1,1 +1,280 @@
-<p>products works!</p>
+<div class="admin-products">
+
+  <!-- ── Header ──────────────────────────────────────────────────────────── -->
+  <div class="page-header fade-up">
+    <div>
+      <h1 class="page-title">Productos</h1>
+      <p class="page-sub">Gestión del catálogo · {{ products().length }} productos</p>
+    </div>
+    <button class="btn-primary" (click)="openCreate()">
+      <span class="material-icons">add</span>
+      Nuevo producto
+    </button>
+  </div>
+
+  <!-- ── Filters ─────────────────────────────────────────────────────────── -->
+  <div class="filters-bar fade-up-1">
+    <div class="search-box">
+      <span class="material-icons search-icon">search</span>
+      <input
+        type="text"
+        class="search-input"
+        placeholder="Buscar por nombre..."
+        (input)="searchTerm.set($any($event.target).value)"
+      />
+    </div>
+    <select class="native-select" (change)="categoryId.set($any($event.target).value)">
+      <option value="">Todas las categorías</option>
+      @for (cat of categories(); track cat.id) {
+        <option [value]="cat.id">{{ cat.name }}</option>
+      }
+    </select>
+  </div>
+
+  <!-- ── Loading ─────────────────────────────────────────────────────────── -->
+  @if (loading()) {
+    <div class="loading-state">
+      <mat-spinner diameter="32"></mat-spinner>
+    </div>
+  }
+
+  <!-- ── Table ───────────────────────────────────────────────────────────── -->
+  @if (!loading()) {
+    <div class="table-container fade-up-2">
+      <table mat-table [dataSource]="filteredProducts()">
+
+        <!-- Status dot -->
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let p">
+            <span class="status-dot" [class.active]="p.isActive" [matTooltip]="p.isActive ? 'Activo' : 'Inactivo'"></span>
+          </td>
+        </ng-container>
+
+        <!-- Name + description -->
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef>Producto</th>
+          <td mat-cell *matCellDef="let p">
+            <div class="product-cell">
+              @if (primaryImage(p)) {
+                <img class="product-thumb" [src]="primaryImage(p)" [alt]="p.name" />
+              } @else {
+                <div class="product-thumb-placeholder">
+                  <span class="material-icons">image</span>
+                </div>
+              }
+              <div class="product-info">
+                <span class="product-name">{{ p.name }}</span>
+                @if (p.description) {
+                  <span class="product-desc">{{ p.description }}</span>
+                }
+              </div>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Category -->
+        <ng-container matColumnDef="category">
+          <th mat-header-cell *matHeaderCellDef>Categoría</th>
+          <td mat-cell *matCellDef="let p">
+            <span class="category-chip">{{ categoryName(p.categoryId) }}</span>
+          </td>
+        </ng-container>
+
+        <!-- Price -->
+        <ng-container matColumnDef="price">
+          <th mat-header-cell *matHeaderCellDef>Precio</th>
+          <td mat-cell *matCellDef="let p">
+            <span class="mono price">{{ p.price | currency: 'USD':'symbol':'1.2-2' }}</span>
+          </td>
+        </ng-container>
+
+        <!-- Stock -->
+        <ng-container matColumnDef="stock">
+          <th mat-header-cell *matHeaderCellDef>Stock</th>
+          <td mat-cell *matCellDef="let p">
+            <span class="stock-badge"
+              [class.out]="p.stock === 0"
+              [class.low]="p.stock > 0 && p.stock <= 5">
+              {{ p.stock }}
+            </span>
+          </td>
+        </ng-container>
+
+        <!-- Actions -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let p">
+            <div class="row-actions">
+              <button mat-icon-button (click)="openEdit(p)" matTooltip="Editar" class="action-btn">
+                <span class="material-icons">edit</span>
+              </button>
+              <button mat-icon-button (click)="toggleActive(p)"
+                [matTooltip]="p.isActive ? 'Desactivar' : 'Activar'"
+                class="action-btn">
+                <span class="material-icons">{{ p.isActive ? 'visibility_off' : 'visibility' }}</span>
+              </button>
+              <button mat-icon-button (click)="delete(p)" matTooltip="Eliminar" class="action-btn delete">
+                <span class="material-icons">delete</span>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="columns"></tr>
+        <tr mat-row *matRowDef="let row; columns: columns" class="product-row"></tr>
+      </table>
+
+      @if (filteredProducts().length === 0) {
+        <div class="empty-state">
+          <span class="material-icons">inventory_2</span>
+          <p>{{ searchTerm() || categoryId() ? 'Sin resultados' : 'Sin productos' }}</p>
+          <span class="empty-hint">
+            {{ searchTerm() || categoryId()
+              ? 'Prueba con otros filtros'
+              : 'Crea el primer producto con el botón "Nuevo producto"' }}
+          </span>
+        </div>
+      }
+    </div>
+  }
+
+</div>
+
+<!-- ── Overlay ──────────────────────────────────────────────────────────── -->
+<div class="panel-overlay" [class.open]="panelOpen()" (click)="closePanel()"></div>
+
+<!-- ── Panel ────────────────────────────────────────────────────────────── -->
+<aside class="product-panel" [class.open]="panelOpen()">
+
+  <div class="panel-header">
+    <h2 class="panel-title">{{ editing() ? 'Editar producto' : 'Nuevo producto' }}</h2>
+    <button mat-icon-button (click)="closePanel()" class="close-btn">
+      <span class="material-icons">close</span>
+    </button>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="save()" class="panel-form">
+
+    <!-- Información básica -->
+    <div class="form-section">
+      <span class="form-section-label">Información básica</span>
+
+      <mat-form-field appearance="outline" class="field-full">
+        <mat-label>Nombre</mat-label>
+        <input matInput formControlName="name" placeholder="Nombre del producto" />
+        @if (form.get('name')?.invalid && form.get('name')?.touched) {
+          <mat-error>El nombre es obligatorio</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="field-full">
+        <mat-label>Descripción</mat-label>
+        <textarea matInput formControlName="description" rows="3" placeholder="Descripción opcional"></textarea>
+      </mat-form-field>
+    </div>
+
+    <!-- Precio y stock -->
+    <div class="form-section">
+      <span class="form-section-label">Precio y stock</span>
+
+      <div class="field-row">
+        <mat-form-field appearance="outline">
+          <mat-label>Precio (USD)</mat-label>
+          <input matInput type="number" formControlName="price" min="0.01" step="0.01" />
+          @if (form.get('price')?.invalid && form.get('price')?.touched) {
+            <mat-error>Precio obligatorio</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Coste (USD)</mat-label>
+          <input matInput type="number" formControlName="cost" min="0" step="0.01" placeholder="Opcional" />
+        </mat-form-field>
+      </div>
+
+      <mat-form-field appearance="outline" class="field-half">
+        <mat-label>Stock</mat-label>
+        <input matInput type="number" formControlName="stock" min="0" />
+      </mat-form-field>
+    </div>
+
+    <!-- Categoría y estado -->
+    <div class="form-section">
+      <span class="form-section-label">Categoría y estado</span>
+
+      <mat-form-field appearance="outline" class="field-full">
+        <mat-label>Categoría</mat-label>
+        <mat-select formControlName="categoryId">
+          @for (cat of categories(); track cat.id) {
+            <mat-option [value]="cat.id">{{ cat.name }}</mat-option>
+          }
+        </mat-select>
+        @if (form.get('categoryId')?.invalid && form.get('categoryId')?.touched) {
+          <mat-error>Selecciona una categoría</mat-error>
+        }
+      </mat-form-field>
+
+      <div class="toggle-row">
+        <div class="toggle-text">
+          <span class="toggle-label">Producto activo</span>
+          <span class="toggle-hint">Visible para compradores en el catálogo</span>
+        </div>
+        <mat-slide-toggle formControlName="isActive" color="primary"></mat-slide-toggle>
+      </div>
+    </div>
+
+    <!-- Imágenes (solo en edición) -->
+    @if (editing()) {
+      <div class="form-section">
+        <span class="form-section-label">Imágenes</span>
+
+        @if (productImages().length > 0) {
+          <div class="images-list">
+            @for (img of productImages(); track img.id) {
+              <div class="image-row">
+                <img class="image-preview" [src]="img.url" [alt]="'Imagen'" />
+                <span class="image-url">{{ img.url }}</span>
+                @if (img.isPrimary) {
+                  <span class="badge badge-blue">Principal</span>
+                }
+                <button mat-icon-button type="button" (click)="removeImage(img.id)" class="action-btn delete" matTooltip="Eliminar imagen">
+                  <span class="material-icons">delete</span>
+                </button>
+              </div>
+            }
+          </div>
+        }
+
+        <div class="image-add-row">
+          <input
+            type="url"
+            class="url-input"
+            placeholder="https://... URL de la imagen"
+            [value]="imageUrl()"
+            (input)="imageUrl.set($any($event.target).value)"
+            (keydown.enter)="$event.preventDefault(); addImage()"
+          />
+          <button type="button" class="btn-secondary" (click)="addImage()" [disabled]="!imageUrl()">
+            <span class="material-icons">add_photo_alternate</span>
+            Añadir
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- Actions -->
+    <div class="panel-actions">
+      <button type="button" class="btn-secondary" (click)="closePanel()">Cancelar</button>
+      <button type="submit" class="btn-primary" [disabled]="saving()">
+        @if (saving()) {
+          <mat-spinner diameter="16"></mat-spinner>
+        } @else {
+          <span class="material-icons">{{ editing() ? 'save' : 'add' }}</span>
+        }
+        {{ editing() ? 'Guardar cambios' : 'Crear producto' }}
+      </button>
+    </div>
+
+  </form>
+</aside>

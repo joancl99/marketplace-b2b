@@ -17,6 +17,8 @@ export class ApiService {
   createProduct(data: any)           { return this.http.post<any>(`${API}/products`, data); }
   updateProduct(id: string, data: any) { return this.http.patch<any>(`${API}/products/${id}`, data); }
   deleteProduct(id: string)          { return this.http.delete<any>(`${API}/products/${id}`); }
+  addProductImage(id: string, data: { url: string; isPrimary?: boolean }) { return this.http.post<any>(`${API}/products/${id}/images`, data); }
+  deleteProductImage(id: string, imageId: string) { return this.http.delete<any>(`${API}/products/${id}/images/${imageId}`); }
 
   // ─── Categories ─────────────────────────────────────────────────────────────
   getCategories()                    { return this.http.get<any[]>(`${API}/categories`); }

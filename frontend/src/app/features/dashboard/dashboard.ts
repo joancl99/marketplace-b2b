@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -8,8 +8,20 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { NgApexchartsModule } from 'ng-apexcharts';
 import { forkJoin } from 'rxjs';
 import { ApiService } from '../../core/services/api.service';
+import { ThemeService } from '../../core/services/theme.service';
 
 type Period = '7d' | '30d' | '90d' | '1y';
+
+const CHART_FONT = 'IBM Plex Sans, sans-serif';
+const CHART_MONO = 'IBM Plex Mono, monospace';
+const AXIS_COLOR = '#8FA3BE';
+const GRID_COLOR = '#2C3D56';
+const NO_DATA_CFG = {
+  text: 'No data available for this period',
+  align: 'center' as const,
+  verticalAlign: 'middle' as const,
+  style: { color: AXIS_COLOR, fontSize: '13px', fontFamily: CHART_FONT },
+};
 
 @Component({
   selector: 'app-dashboard',
@@ -33,6 +45,9 @@ export class Dashboard implements OnInit {
   recentOrders = signal<any[]>([]);
   demandChart = signal<any>(null);
   topProductsChart = signal<any>(null);
+  topProductsList = signal<any[]>([]);
+
+  showProductsAsTable = computed(() => this.topProductsList().length <= 3);
 
   readonly periods: { key: Period; label: string }[] = [
     { key: '7d', label: '7D' },
@@ -42,6 +57,8 @@ export class Dashboard implements OnInit {
   ];
 
   readonly orderCols = ['id', 'status', 'total', 'date'];
+
+  theme = inject(ThemeService);
 
   constructor(private api: ApiService) {}
 
@@ -61,7 +78,11 @@ export class Dashboard implements OnInit {
     }).subscribe({
       next: ({ dashboard, demand, topProducts, orders }) => {
         this.kpis.set(dashboard);
-        this.recentOrders.set((orders as any[]).slice(0, 5));
+        this.recentOrders.set(
+          (orders as any[])
+            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+            .slice(0, 5),
+        );
         this.buildDemandChart(demand as any[]);
         this.buildTopProductsChart(topProducts as any[]);
         this.loading.set(false);
@@ -131,43 +152,48 @@ export class Dashboard implements OnInit {
       ],
       chart: {
         type: 'line',
-        height: 280,
+        height: 320,
         background: 'transparent',
         toolbar: { show: false },
         zoom: { enabled: false },
-        fontFamily: 'IBM Plex Sans, sans-serif',
+        fontFamily: CHART_FONT,
+        sparkline: { enabled: false },
       },
-      colors: ['#3B82F6', '#06B6D4'],
+      colors: ['#5293F7', '#22D3EE'],
       stroke: { curve: 'smooth', width: [2, 2] },
       fill: {
         type: ['gradient', 'solid'],
         gradient: {
           shade: 'dark',
           type: 'vertical',
-          opacityFrom: 0.35,
+          opacityFrom: 0.3,
           opacityTo: 0.02,
         },
       },
       dataLabels: { enabled: false },
       grid: {
-        borderColor: '#243049',
+        borderColor: GRID_COLOR,
         strokeDashArray: 4,
         xaxis: { lines: { show: false } },
         yaxis: { lines: { show: true } },
+        padding: { left: 8, right: 8 },
       },
       xaxis: {
         categories: cats,
         axisBorder: { show: false },
         axisTicks: { show: false },
         labels: {
-          style: { colors: '#8B9ABB', fontSize: '11px', fontFamily: 'IBM Plex Mono, monospace' },
+          style: { colors: AXIS_COLOR, fontSize: '13px', fontFamily: CHART_MONO },
+          rotate: -30,
+          rotateAlways: false,
+          hideOverlappingLabels: true,
         },
       },
       yaxis: [
         {
           seriesName: 'Revenue',
           labels: {
-            style: { colors: '#8B9ABB', fontSize: '11px', fontFamily: 'IBM Plex Mono, monospace' },
+            style: { colors: AXIS_COLOR, fontSize: '13px', fontFamily: CHART_MONO },
             formatter: (v: number) =>
               `$${v >= 1000 ? (v / 1000).toFixed(1) + 'k' : v.toFixed(0)}`,
           },
@@ -176,26 +202,36 @@ export class Dashboard implements OnInit {
           seriesName: 'Orders',
           opposite: true,
           labels: {
-            style: { colors: '#8B9ABB', fontSize: '11px', fontFamily: 'IBM Plex Mono, monospace' },
+            style: { colors: AXIS_COLOR, fontSize: '13px', fontFamily: CHART_MONO },
+            formatter: (v: number) => `${Math.round(v)}`,
           },
         },
       ],
       tooltip: {
         theme: 'dark',
-        style: { fontFamily: 'IBM Plex Mono, monospace' },
+        style: { fontFamily: CHART_MONO },
         y: {
           formatter: (v: number, ctx: any) =>
             ctx.seriesIndex === 0 ? `$${v.toFixed(2)}` : `${v} orders`,
         },
       },
       legend: {
-        labels: { colors: '#8B9ABB' },
-        fontFamily: 'IBM Plex Sans, sans-serif',
+        labels: { colors: AXIS_COLOR },
+        fontFamily: CHART_FONT,
+        fontSize: '13px',
       },
+      noData: NO_DATA_CFG,
     });
   }
 
   private buildTopProductsChart(data: any[]) {
+    this.topProductsList.set(data);
+
+    if (data.length === 0) {
+      this.topProductsChart.set(null);
+      return;
+    }
+
     const names = data.map(d => d.name ?? `#${(d.productId as string)?.slice(0, 6)}`);
     const values = data.map(d => +(+d.totalRevenue).toFixed(2));
 
@@ -203,10 +239,10 @@ export class Dashboard implements OnInit {
       series: [{ name: 'Revenue', data: values }],
       chart: {
         type: 'bar',
-        height: 280,
+        height: 320,
         background: 'transparent',
         toolbar: { show: false },
-        fontFamily: 'IBM Plex Sans, sans-serif',
+        fontFamily: CHART_FONT,
       },
       plotOptions: {
         bar: {
@@ -216,18 +252,19 @@ export class Dashboard implements OnInit {
           distributed: true,
         },
       },
-      colors: ['#3B82F6', '#06B6D4', '#10B981', '#F59E0B', '#8B5CF6', '#EF4444'],
+      colors: ['#5293F7', '#22D3EE', '#34D399', '#FBBF24', '#A78BFA', '#F87171'],
       dataLabels: { enabled: false },
       grid: {
-        borderColor: '#243049',
+        borderColor: GRID_COLOR,
         strokeDashArray: 4,
         xaxis: { lines: { show: true } },
         yaxis: { lines: { show: false } },
+        padding: { left: 4, right: 12 },
       },
       xaxis: {
         categories: names,
         labels: {
-          style: { colors: '#8B9ABB', fontSize: '11px', fontFamily: 'IBM Plex Mono, monospace' },
+          style: { colors: AXIS_COLOR, fontSize: '13px', fontFamily: CHART_MONO },
           formatter: (v: string) => {
             const n = parseFloat(v);
             return isNaN(n) ? v : `$${n >= 1000 ? (n / 1000).toFixed(1) + 'k' : n.toFixed(0)}`;
@@ -238,16 +275,17 @@ export class Dashboard implements OnInit {
       },
       yaxis: {
         labels: {
-          style: { colors: '#8B9ABB', fontSize: '11px', fontFamily: 'IBM Plex Mono, monospace' },
-          maxWidth: 140,
+          style: { colors: AXIS_COLOR, fontSize: '13px', fontFamily: CHART_MONO },
+          maxWidth: 150,
         },
       },
       tooltip: {
         theme: 'dark',
-        style: { fontFamily: 'IBM Plex Mono, monospace' },
+        style: { fontFamily: CHART_MONO },
         y: { formatter: (v: number) => `$${v.toFixed(2)}` },
       },
       legend: { show: false },
+      noData: NO_DATA_CFG,
     });
   }
 }

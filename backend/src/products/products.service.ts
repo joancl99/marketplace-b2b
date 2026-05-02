@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -62,8 +62,17 @@ export class ProductsService {
 
   async remove(id: string) {
     await this.findOne(id);
-    await this.prisma.product.delete({ where: { id } });
-    return { message: 'Product deleted' };
+    try {
+      await this.prisma.product.delete({ where: { id } });
+      return { message: 'Product deleted' };
+    } catch (e: any) {
+      if (e?.code === 'P2003') {
+        throw new ConflictException(
+          'No se puede eliminar este producto porque tiene pedidos asociados. Desactívalo en su lugar.',
+        );
+      }
+      throw e;
+    }
   }
 
   async addImage(productId: string, dto: AddImageDto) {

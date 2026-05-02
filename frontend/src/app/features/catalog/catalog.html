@@ -1,1 +1,247 @@
-<p>catalog works!</p>
+<div class="catalog">
+
+  <!-- ── Header ──────────────────────────────────────────────────────────────── -->
+  <div class="page-header fade-up">
+    <div class="header-text">
+      <h1 class="page-title">Catálogo</h1>
+      <p class="page-sub">
+        @if (!loading()) {
+          <span class="count-badge">{{ filteredProducts().length }}</span>
+          productos disponibles
+        } @else {
+          Cargando catálogo…
+        }
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <div class="theme-toggle" (click)="theme.toggle()" [title]="theme.theme() === 'light' ? 'Switch to dark' : 'Switch to light'">
+        <div class="toggle-indicator" [class.is-dark]="theme.theme() === 'dark'"></div>
+        <span class="toggle-opt" [class.active]="theme.theme() === 'light'">
+          <span class="material-icons">light_mode</span>
+        </span>
+        <span class="toggle-opt" [class.active]="theme.theme() === 'dark'">
+          <span class="material-icons">dark_mode</span>
+        </span>
+      </div>
+      <button class="settings-btn" matTooltip="Settings (coming soon)">
+        <span class="material-icons">settings</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Toolbar ───────────────────────────────────────────────────────────────── -->
+  <div class="toolbar fade-up-1">
+    <div class="search-wrap">
+      <span class="material-icons search-icon">search</span>
+      <input
+        class="search-input"
+        type="text"
+        placeholder="Buscar productos…"
+        [ngModel]="search()"
+        (ngModelChange)="search.set($event)"
+      />
+      @if (search()) {
+        <button class="search-clear" (click)="search.set('')">
+          <span class="material-icons">close</span>
+        </button>
+      }
+    </div>
+
+    <div class="sort-group">
+      @for (s of sorts; track s.key) {
+        <button class="sort-btn" [class.active]="sort() === s.key" (click)="sort.set(s.key)">
+          {{ s.label }}
+        </button>
+      }
+    </div>
+
+    <div class="view-toggle">
+      <button class="view-btn" [class.active]="view() === 'grid'" (click)="view.set('grid')" matTooltip="Vista grid">
+        <span class="material-icons">grid_view</span>
+      </button>
+      <button class="view-btn" [class.active]="view() === 'list'" (click)="view.set('list')" matTooltip="Vista lista">
+        <span class="material-icons">view_list</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Category Filters ─────────────────────────────────────────────────────── -->
+  @if (!loading()) {
+    <div class="category-bar fade-up-1">
+      <button
+        class="cat-chip"
+        [class.active]="selectedCategory() === ''"
+        (click)="selectedCategory.set('')"
+      >
+        <span class="material-icons">apps</span>
+        All categories
+      </button>
+      @for (cat of categories(); track cat.id) {
+        <button
+          class="cat-chip"
+          [class.active]="selectedCategory() === cat.id"
+          (click)="selectedCategory.set(selectedCategory() === cat.id ? '' : cat.id)"
+        >{{ cat.name }}</button>
+      }
+    </div>
+  }
+
+  <!-- ── Loading ──────────────────────────────────────────────────────────────── -->
+  @if (loading()) {
+    <div class="loading-state">
+      <mat-spinner diameter="36"></mat-spinner>
+    </div>
+  }
+
+  <!-- ── Grid view ────────────────────────────────────────────────────────────── -->
+  @if (!loading() && view() === 'grid') {
+    @if (filteredProducts().length > 0) {
+      <div class="product-grid">
+        @for (p of filteredProducts(); track p.id; let i = $index) {
+          <a
+            class="product-card fade-up"
+            [style.animation-delay]="(i % 12 * 40) + 'ms'"
+            [routerLink]="['/catalog', p.id]"
+          >
+            <!-- Image -->
+            <div class="card-image">
+              @if (primaryImage(p); as img) {
+                <img [src]="img" [alt]="p.name" loading="lazy" />
+              } @else {
+                <div class="card-image-placeholder">
+                  <span class="material-icons">inventory_2</span>
+                </div>
+              }
+              <!-- Wishlist -->
+              <button
+                class="wishlist-btn"
+                [class.active]="inWishlist(p.id)"
+                (click)="toggleWishlist(p, $event)"
+                [matTooltip]="inWishlist(p.id) ? 'Remove from wishlist' : 'Add to wishlist'"
+              >
+                <span class="material-icons">{{ inWishlist(p.id) ? 'favorite' : 'favorite_border' }}</span>
+              </button>
+            </div>
+
+            <!-- Body -->
+            <div class="card-body">
+              <div class="card-meta">
+                @if (categoryName(p.categoryId)) {
+                  <span class="cat-label">{{ categoryName(p.categoryId) }}</span>
+                }
+                <span class="stock-pill" [ngClass]="stockClass(p.stock)">
+                  {{ stockLabel(p.stock) }}
+                </span>
+              </div>
+
+              <h3 class="card-name">{{ p.name }}</h3>
+
+              @if (p.description) {
+                <p class="card-desc">{{ p.description }}</p>
+              }
+
+              <div class="card-footer">
+                <span class="card-price">{{ p.price | currency }}</span>
+                <button
+                  class="cart-btn"
+                  [class.in-cart]="inCart(p.id)"
+                  [disabled]="p.stock === 0 || isAdding(p.id)"
+                  (click)="addToCart(p, $event)"
+                  [matTooltip]="inCart(p.id) ? 'Already in cart' : p.stock === 0 ? 'Out of stock' : 'Add to cart'"
+                >
+                  @if (isAdding(p.id)) {
+                    <mat-spinner diameter="16"></mat-spinner>
+                  } @else {
+                    <span class="material-icons">{{ inCart(p.id) ? 'check' : 'add_shopping_cart' }}</span>
+                  }
+                </button>
+              </div>
+            </div>
+          </a>
+        }
+      </div>
+    } @else {
+      <div class="empty-state fade-up">
+        <span class="material-icons">search_off</span>
+        <p>No products found</p>
+        <span class="empty-hint">Try adjusting your search or filters</span>
+        <button class="reset-btn" (click)="search.set(''); selectedCategory.set('')">Clear filters</button>
+      </div>
+    }
+  }
+
+  <!-- ── List view ────────────────────────────────────────────────────────────── -->
+  @if (!loading() && view() === 'list') {
+    @if (filteredProducts().length > 0) {
+      <div class="product-list">
+        @for (p of filteredProducts(); track p.id; let i = $index) {
+          <a
+            class="list-row fade-up"
+            [style.animation-delay]="(i % 20 * 30) + 'ms'"
+            [routerLink]="['/catalog', p.id]"
+          >
+            <div class="list-img">
+              @if (primaryImage(p); as img) {
+                <img [src]="img" [alt]="p.name" loading="lazy" />
+              } @else {
+                <div class="list-img-placeholder">
+                  <span class="material-icons">inventory_2</span>
+                </div>
+              }
+            </div>
+
+            <div class="list-body">
+              <div class="list-top">
+                @if (categoryName(p.categoryId)) {
+                  <span class="cat-label">{{ categoryName(p.categoryId) }}</span>
+                }
+              </div>
+              <h3 class="list-name">{{ p.name }}</h3>
+              @if (p.description) {
+                <p class="list-desc">{{ p.description }}</p>
+              }
+            </div>
+
+            <div class="list-right">
+              <span class="stock-pill" [ngClass]="stockClass(p.stock)">{{ stockLabel(p.stock) }}</span>
+              <span class="list-price">{{ p.price | currency }}</span>
+              <div class="list-actions">
+                <button
+                  class="wishlist-btn-list"
+                  [class.active]="inWishlist(p.id)"
+                  (click)="toggleWishlist(p, $event)"
+                  [matTooltip]="inWishlist(p.id) ? 'Remove from wishlist' : 'Add to wishlist'"
+                >
+                  <span class="material-icons">{{ inWishlist(p.id) ? 'favorite' : 'favorite_border' }}</span>
+                </button>
+                <button
+                  class="cart-btn-list"
+                  [class.in-cart]="inCart(p.id)"
+                  [disabled]="p.stock === 0 || isAdding(p.id)"
+                  (click)="addToCart(p, $event)"
+                  [matTooltip]="inCart(p.id) ? 'Already in cart' : p.stock === 0 ? 'Out of stock' : 'Add to cart'"
+                >
+                  @if (isAdding(p.id)) {
+                    <mat-spinner diameter="14"></mat-spinner>
+                  } @else {
+                    <span class="material-icons">{{ inCart(p.id) ? 'check' : 'add_shopping_cart' }}</span>
+                  }
+                  {{ inCart(p.id) ? 'In cart' : 'Add to cart' }}
+                </button>
+              </div>
+            </div>
+          </a>
+        }
+      </div>
+    } @else {
+      <div class="empty-state fade-up">
+        <span class="material-icons">search_off</span>
+        <p>No products found</p>
+        <span class="empty-hint">Try adjusting your search or filters</span>
+        <button class="reset-btn" (click)="search.set(''); selectedCategory.set('')">Clear filters</button>
+      </div>
+    }
+  }
+
+</div>

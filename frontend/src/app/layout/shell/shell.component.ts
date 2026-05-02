@@ -32,13 +32,13 @@ export class ShellComponent {
   auth = inject(AuthService);
 
   navItems: NavItem[] = [
-    { label: 'Dashboard',  icon: 'bar_chart',      route: '/dashboard' },
-    { label: 'Catálogo',   icon: 'inventory_2',    route: '/catalog' },
-    { label: 'Carrito',    icon: 'shopping_cart',  route: '/cart' },
-    { label: 'Wishlist',   icon: 'favorite',       route: '/wishlist' },
-    { label: 'Pedidos',    icon: 'receipt_long',   route: '/orders' },
-    { label: 'Productos',  icon: 'edit_note',      route: '/admin/products', adminOnly: true },
-    { label: 'Gestión',    icon: 'admin_panel_settings', route: '/admin/orders', adminOnly: true },
+    { label: 'Dashboard',  icon: 'bar_chart',            route: '/dashboard' },
+    { label: 'Catálogo',   icon: 'inventory_2',          route: '/catalog' },
+    { label: 'Carrito',    icon: 'shopping_cart',        route: '/cart' },
+    { label: 'Wishlist',   icon: 'favorite',             route: '/wishlist' },
+    { label: 'Pedidos',    icon: 'receipt_long',         route: '/orders' },
+    { label: 'Productos',  icon: 'edit_note',            route: '/admin/products', adminOnly: true },
+    { label: 'Gestión',    icon: 'admin_panel_settings', route: '/admin/orders',   adminOnly: true },
   ];
 
   visibleNav = computed(() =>

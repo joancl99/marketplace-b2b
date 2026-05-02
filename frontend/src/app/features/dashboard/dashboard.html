@@ -2,23 +2,44 @@
 
   <!-- ── Header ──────────────────────────────────────────────────────────── -->
   <div class="page-header fade-up">
+
     <div class="header-text">
       <h1 class="page-title">Dashboard</h1>
       <p class="page-sub">Marketplace performance overview</p>
     </div>
-    <div class="period-tabs">
-      @for (p of periods; track p.key) {
-        <button class="period-btn" [class.active]="period() === p.key" (click)="setPeriod(p.key)">
-          {{ p.label }}
-        </button>
-      }
+
+    <div class="period-group">
+      <span class="period-label">Período de análisis</span>
+      <div class="period-tabs">
+        @for (p of periods; track p.key) {
+          <button class="period-btn" [class.active]="period() === p.key" (click)="setPeriod(p.key)">
+            {{ p.label }}
+          </button>
+        }
+      </div>
     </div>
+
+    <div class="header-actions">
+      <div class="theme-toggle" (click)="theme.toggle()" [title]="theme.theme() === 'light' ? 'Switch to dark' : 'Switch to light'">
+        <div class="toggle-indicator" [class.is-dark]="theme.theme() === 'dark'"></div>
+        <span class="toggle-opt" [class.active]="theme.theme() === 'light'">
+          <span class="material-icons">light_mode</span>
+        </span>
+        <span class="toggle-opt" [class.active]="theme.theme() === 'dark'">
+          <span class="material-icons">dark_mode</span>
+        </span>
+      </div>
+      <button class="settings-btn" matTooltip="Settings (coming soon)">
+        <span class="material-icons">settings</span>
+      </button>
+    </div>
+
   </div>
 
   <!-- ── Loading ─────────────────────────────────────────────────────────── -->
   @if (loading()) {
     <div class="loading-state">
-      <mat-spinner diameter="32"></mat-spinner>
+      <mat-spinner diameter="36"></mat-spinner>
     </div>
   }
 
@@ -33,6 +54,7 @@
         <div class="kpi-body">
           <span class="kpi-label">Total Revenue</span>
           <span class="kpi-value">{{ k.totalRevenue | currency: 'USD' : 'symbol' : '1.0-0' }}</span>
+          <span class="kpi-hint">From all confirmed orders</span>
         </div>
       </div>
 
@@ -43,6 +65,7 @@
         <div class="kpi-body">
           <span class="kpi-label">Total Orders</span>
           <span class="kpi-value">{{ k.totalOrders | number }}</span>
+          <span class="kpi-hint">All orders in the system</span>
         </div>
       </div>
 
@@ -53,6 +76,7 @@
         <div class="kpi-body">
           <span class="kpi-label">Avg Order Value</span>
           <span class="kpi-value">{{ k.avgOrderValue | currency: 'USD' : 'symbol' : '1.0-0' }}</span>
+          <span class="kpi-hint">Revenue per transaction</span>
         </div>
       </div>
 
@@ -63,6 +87,7 @@
         <div class="kpi-body">
           <span class="kpi-label">Customers</span>
           <span class="kpi-value">{{ k.totalCustomers | number }}</span>
+          <span class="kpi-hint">Active buyers on platform</span>
         </div>
       </div>
 
@@ -93,9 +118,14 @@
           [dataLabels]="opts.dataLabels"
           [tooltip]="opts.tooltip"
           [legend]="opts.legend"
+          [noData]="opts.noData"
         ></apx-chart>
       } @else {
-        <div class="chart-placeholder"></div>
+        <div class="empty-state">
+          <span class="material-icons">show_chart</span>
+          <p>No demand data yet</p>
+          <span class="empty-hint">Place orders to start tracking demand evolution over time</span>
+        </div>
       }
     </div>
 
@@ -107,21 +137,44 @@
           <span class="card-sub">By total revenue</span>
         </div>
       </div>
-      @if (topProductsChart(); as opts) {
-        <apx-chart
-          [series]="opts.series"
-          [chart]="opts.chart"
-          [xaxis]="opts.xaxis"
-          [yaxis]="opts.yaxis"
-          [plotOptions]="opts.plotOptions"
-          [colors]="opts.colors"
-          [grid]="opts.grid"
-          [dataLabels]="opts.dataLabels"
-          [tooltip]="opts.tooltip"
-          [legend]="opts.legend"
-        ></apx-chart>
+
+      @if (showProductsAsTable()) {
+        @if (topProductsList().length > 0) {
+          <div class="products-table">
+            @for (p of topProductsList(); track p.productId; let i = $index) {
+              <div class="product-row">
+                <span class="product-rank">#{{ i + 1 }}</span>
+                <div class="product-info">
+                  <span class="product-name">{{ p.name ?? ('Product #' + (p.productId?.slice(0, 6) ?? '—')) }}</span>
+                  <span class="product-units">{{ p.totalQuantity ?? 0 }} units sold</span>
+                </div>
+                <span class="product-revenue">{{ p.totalRevenue | currency: 'USD':'symbol':'1.0-0' }}</span>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="empty-state">
+            <span class="material-icons">inventory_2</span>
+            <p>No sales yet</p>
+            <span class="empty-hint">Products from confirmed orders will appear here</span>
+          </div>
+        }
       } @else {
-        <div class="chart-placeholder"></div>
+        @if (topProductsChart(); as opts) {
+          <apx-chart
+            [series]="opts.series"
+            [chart]="opts.chart"
+            [xaxis]="opts.xaxis"
+            [yaxis]="opts.yaxis"
+            [plotOptions]="opts.plotOptions"
+            [colors]="opts.colors"
+            [grid]="opts.grid"
+            [dataLabels]="opts.dataLabels"
+            [tooltip]="opts.tooltip"
+            [legend]="opts.legend"
+            [noData]="opts.noData"
+          ></apx-chart>
+        }
       }
     </div>
 
@@ -176,8 +229,9 @@
       </table>
     } @else if (!loading()) {
       <div class="empty-state">
-        <span class="material-icons">inbox</span>
+        <span class="material-icons">receipt_long</span>
         <p>No orders yet</p>
+        <span class="empty-hint">Orders placed from the catalog will appear here</span>
       </div>
     }
   </div>

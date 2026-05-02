@@ -1,6 +1,6 @@
 @use '@angular/material' as mat;
 
-// ─── Custom dark theme ────────────────────────────────────────────────────────
+// ─── Dark theme (default) ─────────────────────────────────────────────────────
 html {
   @include mat.theme((
     color: (
@@ -13,34 +13,74 @@ html {
   ));
 }
 
-// ─── Design tokens ────────────────────────────────────────────────────────────
+// ─── Light theme override ─────────────────────────────────────────────────────
+html[data-theme="light"] {
+  @include mat.theme((
+    color: (
+      primary: mat.$azure-palette,
+      tertiary: mat.$cyan-palette,
+      theme-type: light,
+    ),
+    typography: 'IBM Plex Sans',
+    density: -1,
+  ));
+}
+
+// ─── Design tokens — Dark ─────────────────────────────────────────────────────
+:root,
+[data-theme="dark"] {
+  --bg-base:        #0B0F1A;
+  --bg-surface:     #111826;
+  --bg-elevated:    #192236;
+  --bg-card:        #1E2B42;
+  --border:         #2C3D56;
+  --border-subtle:  #1F2E42;
+
+  --accent-blue:    #5293F7;
+  --accent-cyan:    #22D3EE;
+  --accent-green:   #34D399;
+  --accent-amber:   #FBBF24;
+  --accent-red:     #F87171;
+
+  --text-primary:   #EDF4FF;
+  --text-secondary: #8FA3BE;
+  --text-muted:     #4C5E78;
+
+  --shadow-card:     0 1px 4px rgba(0,0,0,0.5), 0 4px 20px rgba(0,0,0,0.35);
+  --shadow-elevated: 0 8px 36px rgba(0,0,0,0.6);
+}
+
+// ─── Design tokens — Light ────────────────────────────────────────────────────
+[data-theme="light"] {
+  --bg-base:        #F2F6FC;
+  --bg-surface:     #E8EEF8;
+  --bg-elevated:    #DBE4F2;
+  --bg-card:        #FFFFFF;
+  --border:         #C4D1E8;
+  --border-subtle:  #D6E1F0;
+
+  --accent-blue:    #1D6FE8;
+  --accent-cyan:    #0891B2;
+  --accent-green:   #059669;
+  --accent-amber:   #D97706;
+  --accent-red:     #DC2626;
+
+  --text-primary:   #0D1526;
+  --text-secondary: #4A5A72;
+  --text-muted:     #8298B5;
+
+  --shadow-card:     0 1px 3px rgba(15,30,60,0.08), 0 4px 12px rgba(15,30,60,0.05);
+  --shadow-elevated: 0 4px 20px rgba(15,30,60,0.12);
+}
+
+// ─── Shared tokens (no cambian con el tema) ───────────────────────────────────
 :root {
-  --bg-base:        #080B11;
-  --bg-surface:     #0F1420;
-  --bg-elevated:    #161C2D;
-  --bg-card:        #1A2236;
-  --border:         #243049;
-  --border-subtle:  #1A2436;
-
-  --accent-blue:    #3B82F6;
-  --accent-cyan:    #06B6D4;
-  --accent-green:   #10B981;
-  --accent-amber:   #F59E0B;
-  --accent-red:     #EF4444;
-
-  --text-primary:   #F0F4FF;
-  --text-secondary: #8B9ABB;
-  --text-muted:     #4A5568;
-
   --font-sans:  'IBM Plex Sans', sans-serif;
   --font-mono:  'IBM Plex Mono', monospace;
 
   --radius-sm:  4px;
   --radius-md:  8px;
   --radius-lg:  12px;
-
-  --shadow-card: 0 1px 3px rgba(0,0,0,0.4), 0 4px 16px rgba(0,0,0,0.3);
-  --shadow-elevated: 0 8px 32px rgba(0,0,0,0.5);
 }
 
 // ─── Base ─────────────────────────────────────────────────────────────────────
@@ -53,7 +93,7 @@ html, body {
   color: var(--text-primary);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
-  color-scheme: dark;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 // ─── Scrollbar ────────────────────────────────────────────────────────────────
